@@ -4,6 +4,17 @@
 
 把待办清单、时间规划和一块贴边挂件装进同一扇小窗：清单随手记、甘特看全局，挂件贴边停靠不占地方。
 
+## 界面预览
+
+<p>
+  <img src="docs/screenshot-memo.png" alt="工作清单" width="280">
+  &nbsp;&nbsp;
+  <img src="docs/screenshot-widget.png" alt="桌面挂件" width="120">
+</p>
+<p>
+  <img src="docs/screenshot-gantt.png" alt="甘特图" width="640">
+</p>
+
 ## 功能特性
 
 - **工作清单**
