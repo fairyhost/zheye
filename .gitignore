@@ -3,5 +3,6 @@ release/
 *.log
 local-file/
 .workbuddy/
-build/
+build/*
+!build/installer.nsh
 ptr-utf8.txt

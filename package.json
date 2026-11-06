@@ -79,7 +79,7 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": false,
+      "allowToChangeInstallationDirectory": true,
       "include": "build/installer.nsh",
       "perMachine": false,
       "runAfterFinish": true,
