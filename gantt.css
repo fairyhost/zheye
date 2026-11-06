@@ -1,0 +1,681 @@
+/* 桌宠备忘 · 甘特图 —— 晨雾 · 版式3改4
+   合并居中双行表头（月份行 + 日期行）/ 20px 加粗深青条 +
+   条内任务名 / 连续周末色带（整列贯通）/ 三档粒度 14·28·56 */
+:root {
+  --bg: #f4f7f8;
+  --surface: #ffffff;
+  --ink: #2c3840;
+  --muted: #7e8e99;
+  --faint: #adbcc4;
+  --line: #e4ebee;
+  --accent: #2f8f86;
+  --accent-deep: #2b847b;
+  --accent-soft: #e3f2f0;
+  --red: #d05e52;
+  --weekend: #eef4f6;
+  --wknd-hatch: repeating-linear-gradient(45deg, transparent 0 5px, #c3d5db 5px 6px);
+  --hover: #f2f7f7;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  font-family: "Segoe UI", "Microsoft YaHei UI", "PingFang SC", sans-serif;
+}
+
+#wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 14px 16px 12px;
+}
+
+/* ---------- 工具条 ---------- */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex: none;
+}
+
+#g-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+#g-count {
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+#paging {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#toolbar button {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  border-radius: 7px;
+  height: 26px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#toolbar button:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+#prev-btn, #next-btn { width: 30px; }
+
+/* 用 #gran-seg 前缀压过 #toolbar button 的优先级，否则选中态样式会被工具条按钮默认样式覆盖 */
+#gran-seg {
+  display: flex;
+  background: #e6edef;
+  border-radius: 8px;
+  padding: 2px;
+}
+
+#gran-seg .gran {
+  border: none;
+  background: transparent;
+  height: 22px;
+  padding: 0 12px;
+  border-radius: 6px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+}
+
+#gran-seg .gran:hover { color: var(--ink); }
+
+/* 选中档：青底反白，一眼可辨 */
+#gran-seg .gran.active {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(44, 56, 64, .18);
+}
+
+/* ---------- 今日标记配置面板 ---------- */
+#cfg-wrap { position: relative; }
+
+#cfg-btn {
+  width: 26px;
+}
+
+/* 置顶图钉：激活态用主题青碧标出 */
+#pin-btn.active {
+  color: var(--accent);
+}
+
+#cfg-panel {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  z-index: 20;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(44, 56, 64, .14);
+  padding: 10px 14px;
+  min-width: 140px;
+}
+
+#cfg-panel .cfg-title {
+  font-size: 11px;
+  color: var(--faint);
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+#cfg-panel label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink);
+  padding: 4px 2px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#cfg-panel label:hover { color: var(--accent); }
+
+#cfg-panel input { accent-color: var(--accent); margin: 0; }
+
+/* 标记颜色行：取色器 + 恢复默认 */
+#cfg-panel .cfg-color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+#cfg-panel .cfg-color-row input[type="color"] {
+  width: 40px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+}
+
+#cfg-panel .cfg-color-row button {
+  font-size: 11px;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+#cfg-panel .cfg-color-row button:hover { color: var(--accent); border-color: var(--accent); }
+
+#range-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+#legend {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: auto;
+}
+
+#legend i {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  margin-right: 4px;
+  vertical-align: -1px;
+  font-style: normal;
+}
+
+/* ---------- 网格 ---------- */
+/* 列宽由 gantt.js 按窗口实际宽度均分（14/28/56 天都铺满），
+   scrollbar-gutter: stable 预留纵向滚动条槽，避免出现后列宽微移 */
+#gridwrap {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden auto;
+  scrollbar-gutter: stable;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+/* ---------- 启动骨架屏：每次打开窗口加载期间的占位与提示 ---------- */
+#boot-skeleton {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: var(--bg, #f4f7f8);
+  padding: 48px 28px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.sk-tip {
+  font-size: 12px;
+  color: var(--muted, #7e8e99);
+  letter-spacing: 0.04em;
+  animation: sk-fade 1.6s ease-in-out infinite;
+}
+
+@keyframes sk-fade {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+.sk-row {
+  height: 22px;
+  border-radius: 8px;
+  background: linear-gradient(100deg, #e6edf0 40%, #f1f6f7 50%, #e6edf0 60%);
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.4s ease-in-out infinite;
+}
+
+.sk-row.sk-head { height: 30px; width: 30%; }
+.sk-row.accent { background-color: #cfe4e1; }
+.sk-row.red    { background-color: #efd3cf; }
+.sk-row.w18 { width: 18%; } .sk-row.w25 { width: 25%; }
+.sk-row.w28 { width: 28%; } .sk-row.w32 { width: 32%; }
+.sk-row.w40 { width: 40%; } .sk-row.w45 { width: 45%; }
+
+@keyframes sk-shimmer {
+  from { background-position: 120% 0; }
+  to   { background-position: -80% 0; }
+}
+
+/* ---------- 滚动条（晨雾风格细胶囊，与 memo 统一） ---------- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(44, 56, 64, 0.25);
+  border-radius: 8px;
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(44, 56, 64, 0.4);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: rgba(44, 56, 64, 0.55);
+}
+
+/* flex: 1 0 auto —— #grid 真正撑满 gridwrap（内容不足时今日线/色带也能贯通到底） */
+#grid {
+  position: relative;
+  flex: 1 0 auto;
+}
+
+/* 连续周末色带：一整块底层，从表头下沿贯通到任务区末尾
+   （top/left/width 由 gantt.js 按表头实际高度与动态列宽设置） */
+.g-bands {
+  position: absolute;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.g-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--wknd-hatch);
+}
+
+/* 行名列右缘线：整个网格高度贯通（含下方无任务的空白区），与行内 border-right 同色同位 */
+.g-name-rule {
+  position: absolute;
+  top: 0;
+  width: 0;
+  border-left: 1px solid var(--line);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 今日标记：样式由 ⚙ 面板选择（left/top/width 由 gantt.js 设置）
+   dash 虚线 / solid 实线+三角 / flag 旗标 / fill 整列底色 / chan 夹线通道
+   统一 z2：压在条块之上、条内文字（z3）之下；颜色统一走 --today-c（⚙ 面板取色器可调） */
+.g-today {
+  position: absolute;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.g-today--dash {
+  width: 0;
+  border-left: 1px dashed var(--today-c, var(--accent));
+  opacity: .55;
+}
+
+.g-today--solid {
+  width: 0;
+  border-left: 2px solid var(--today-c, var(--accent));
+}
+
+.g-today--solid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -6px;
+  border: 5px solid transparent;
+  border-top-color: var(--today-c, var(--accent));
+}
+
+.g-today--flag {
+  width: 0;
+  border-left: 1px dashed var(--today-c, var(--accent));
+  opacity: .55;
+}
+
+.g-today--flag::before {
+  content: '今天';
+  position: absolute;
+  top: -1px;
+  left: 4px;
+  font-size: 9px;
+  line-height: 1;
+  color: #fff;
+  background: var(--today-c, var(--accent));
+  padding: 3px 6px;
+  border-radius: 7px;
+  white-space: nowrap;
+}
+
+.g-today--fill {
+  background: color-mix(in srgb, var(--today-c, var(--accent)) 12%, transparent);
+}
+
+.g-today--chan {
+  border-left: 1px solid var(--today-c, var(--accent));
+  border-right: 1px solid var(--today-c, var(--accent));
+  background: color-mix(in srgb, var(--today-c, var(--accent)) 6%, transparent);
+  opacity: .8;
+}
+
+/* 表头：CSS Grid，角格贯穿月份行 + 日期行并居中
+   （grid-template-columns 由 gantt.js 按粒度与窗口宽度设置） */
+.g-header {
+  display: grid;
+  grid-template-rows: auto auto auto;
+  border-bottom: 1px solid var(--line);
+  position: relative;
+  z-index: 1;
+}
+
+.g-corner {
+  grid-row: 1 / 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+}
+
+/* 第一行：只写月份 */
+.g-month {
+  grid-row: 1;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--surface);
+  padding: 7px 0 6px;
+  text-align: center;
+  border-left: 1px solid var(--line);
+  letter-spacing: 2px;
+}
+
+.g-month:first-of-type { border-left: none; }
+.g-month.istoday-m { color: var(--accent); }
+
+/* 第二行：只写日期数字 */
+.g-cell {
+  grid-row: 2;
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--surface);
+  padding: 4px 0 7px;
+  text-align: center;
+  line-height: 1;
+  border-left: 1px solid #f0f4f5;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 第三行：周几 */
+.g-dow {
+  grid-row: 3;
+  font-size: 9.5px;
+  color: #9db4bc;
+  background: var(--surface);
+  padding: 5px 0 5px;
+  text-align: center;
+  line-height: 1;
+  border-left: 1px solid #f0f4f5;
+}
+
+.g-dow.istoday { color: var(--accent); font-weight: 600; }
+
+.g-cell.wkstart, .g-dow.wkstart { border-left: 1px solid var(--line); }
+.g-cell.wknd, .g-dow.wknd { background: var(--wknd-hatch); }
+.g-cell.wknd { color: #a8b6bd; }
+.g-cell.istoday {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ---------- 任务行 ---------- */
+/* 行不设 z-index：条块（z-auto）、今日标记（z2）、条内文字（z3）都在同一堆叠上下文分层 */
+.g-row {
+  display: flex;
+  align-items: stretch;
+  position: relative;
+}
+
+.g-row + .g-row { border-top: 1px solid #f0f4f5; }
+
+/* 行悬浮：整行半透明灰底（周末条纹透出，跟随变色） */
+.g-row:hover { background: rgba(44, 56, 64, .09); }
+.g-row:hover .g-chan { filter: brightness(1.06); }
+
+.g-name {
+  width: 170px;
+  flex: none;
+  padding: 6px 10px;
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  min-height: var(--rowh, 40px);
+}
+
+.gn-name {
+  font-size: 12px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gn-time {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.g-track {
+  position: relative;
+  height: var(--rowh, 40px);
+  flex: none;
+}
+
+/* 加粗条：36px，深青轻渐变；条宽 >110px 时任务名写进条内；
+   条在行内垂直居中（行高随 --rowh 自适应）。
+   条不设 z-index（z-auto 层）：今日标记（z2）压在条上，条内文字（z3）压在标记上 */
+.g-chan {
+  position: absolute;
+  top: calc((var(--rowh, 40px) - 36px) / 2);
+  height: 36px;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #35978f, var(--accent-deep));
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(44, 56, 64, .22);
+  overflow: hidden;
+}
+
+/* 条内文字层：独立于条块（track 的子元素，JS 定位），z3 高于今日标记 z2；
+   pointer-events:none，点击/悬浮穿透到条块 */
+.g-track .bl {
+  position: absolute;
+  top: calc((var(--rowh, 40px) - 36px) / 2);
+  height: 36px;
+  box-sizing: border-box;
+  font-size: 10.5px;
+  color: #fff;
+  padding: 0 10px;
+  line-height: 36px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.g-chan:hover { filter: brightness(1.06); }
+
+/* 无截止开口条：尾部样式三选一（⚙ 配置面板），默认 fade
+   fade 渐隐淡出 / arrow 箭头收尾 / dots 渐隐圆点 */
+.g-chan.open {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+/* fade：条末 64px 蒙版渐隐到无，像烟一样消散 */
+.g-chan.open--fade {
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 64px), transparent 98%);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 64px), transparent 98%);
+}
+/* arrow：右端收成向右箭尖，直接表达「往右继续、没有终点」 */
+.g-chan.open--arrow {
+  clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 50%, calc(100% - 22px) 100%, 0 100%);
+}
+
+.g-chan.done {
+  background: #b9d9d5;
+  box-shadow: none;
+  opacity: .9;
+}
+
+.g-chan.done .bl { color: #4d6e64; }
+
+.g-chan.overdue {
+  background: linear-gradient(180deg, #d4685e, #c8554b);
+  box-shadow: 0 1px 3px rgba(44, 56, 64, .25);
+}
+
+.g-chan.notstarted {
+  background: #ccd8dd;
+  box-shadow: none;
+}
+
+.g-chan.notstarted .bl { color: #5b6a72; }
+
+/* ---------- 底部状态区 ---------- */
+#status {
+  flex: none;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+#outnote, #someday {
+  display: block;
+}
+
+#hint { color: var(--faint); }
+
+/* ---------- 就地编辑面板 ---------- */
+#editor {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+/* 任务名编辑框（原为只读文字，现可改名） */
+#e-name {
+  width: 200px;
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+}
+
+#e-name:focus { border-color: var(--accent); outline: none; }
+
+#editor label {
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#editor input {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+}
+
+#editor button {
+  border-radius: 8px;
+  padding: 5px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+#e-save {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+#e-save:hover {
+  background: var(--accent-deep);
+}
+
+#e-cancel {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+}
+
+#e-cancel:hover {
+  background: var(--hover);
+}

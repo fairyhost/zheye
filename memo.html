@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'">
+  <link rel="stylesheet" href="memo.css">
+  <title>任务清单 · 折页</title>
+</head>
+<body>
+  <div id="app">
+    <div id="titlebar">
+      <span class="title">任务清单</span>
+      <span id="tb-btns">
+        <button id="pin-btn" title="窗口置顶" aria-label="窗口置顶"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h4M6.5 2v3.2c0 .5-.2 1-.5 1.4L4.8 8.2c-.4.5-.1 1.3.6 1.3h5.2c.7 0 1-.8.6-1.3L10 6.6a2.3 2.3 0 0 1-.5-1.4V2M8 9.5V14"/></svg></button>
+        <button id="gantt-btn" title="甘特图" aria-label="打开甘特图"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 3.5h12M2 8h8M2 12.5h5"/></svg></button>
+        <button id="close-btn" title="收起">✕</button>
+      </span>
+    </div>
+    <div id="tabs">
+      <button class="tab active" data-tab="today">今日 <span class="tab-n" id="badge-today">0</span></button>
+      <button class="tab" data-tab="week">本周 <span class="tab-n" id="badge-week">0</span></button>
+      <button class="tab" data-tab="future">长远 <span class="tab-n" id="badge-future">0</span></button>
+      <button class="tab" data-tab="history">历史</button>
+    </div>
+    <div id="add-bar">
+      <button id="add-btn" title="添加任务（含时间与描述）">＋ 添加任务</button>
+    </div>
+    <ul id="task-list"></ul>
+    <div id="empty-hint" hidden>暂无任务，点上方「＋ 添加任务」开始</div>
+    <div id="task-dialog" hidden>
+      <div id="td-card">
+        <div id="td-head">
+          <span id="td-title">添加任务</span>
+          <button id="td-close" title="关闭">✕</button>
+        </div>
+        <textarea id="td-text" placeholder="任务内容（必填）" maxlength="500" rows="2"></textarea>
+        <div id="td-chips">
+          <button type="button" class="chip" data-quick="today">今天</button>
+          <button type="button" class="chip" data-quick="tomorrow">明天</button>
+          <button type="button" class="chip" data-quick="dayafter">后天</button>
+          <button type="button" class="chip" data-quick="none">待安排</button>
+        </div>
+        <div class="dt"><span>开始</span><input id="td-sd" type="date"><input id="td-st" type="time"></div>
+        <div class="dt"><span>完成</span><input id="td-dd" type="date"><input id="td-dt" type="time"></div>
+        <div class="dt"><span>描述</span><textarea id="td-desc" placeholder="详细描述（可选）" maxlength="2000" rows="3"></textarea></div>
+        <div id="td-btns">
+          <button id="td-save" type="button">保存</button>
+          <button id="td-cancel" type="button">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="memo.js"></script>
+</body>
+</html>

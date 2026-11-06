@@ -1,0 +1,83 @@
+{
+  "name": "zheye",
+  "productName": "折页",
+  "version": "1.0.0",
+  "description": "折页-任务清单+甘特图",
+  "main": "main.js",
+  "author": "fairyhost",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "node scripts/dev.js",
+    "icon": "electron scripts/make-icon.js",
+    "dist": "node scripts/dist.js",
+    "dist:d": "node scripts/dist.js d"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "electronmon": "^2.0.4",
+    "png2icons": "^2.0.1"
+  },
+  "build": {
+    "appId": "com.fairyhost.zheye",
+    "productName": "折页",
+    "afterPack": "scripts/after-pack.js",
+    "directories": {
+      "output": "release"
+    },
+    "compression": "maximum",
+    "electronLanguages": ["zh-CN", "en-US"],
+    "files": [
+      "main.js",
+      "store.js",
+      "dataDir.js",
+      "preload.js",
+      "ask.html",
+      "ask.css",
+      "ask.js",
+      "gantt.html",
+      "gantt.css",
+      "gantt.js",
+      "memo.html",
+      "memo.css",
+      "memo.js",
+      "pet.html",
+      "pet.css",
+      "pet.js",
+      "assets/**/*",
+      "skins/**/*",
+      "!**/*.log",
+      "!**/.*",
+      "!release",
+      "!release2",
+      "!scripts",
+      "!local-file",
+      "!node_modules",
+      "!.workbuddy"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable",
+        "dir"
+      ],
+      "icon": "assets/icon.ico",
+      "executableName": "ZheYe",
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "artifactName": "ZheYe-Portable-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": false,
+      "include": "build/installer.nsh",
+      "perMachine": false,
+      "runAfterFinish": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "折页",
+      "artifactName": "ZheYe-Setup-${version}.${ext}"
+    }
+  }
+}

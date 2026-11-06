@@ -1,0 +1,16 @@
+{
+  "id": "eous",
+  "name": "伊埃斯",
+  "sizes": { "small": 140, "medium": 200, "large": 280 },
+  "dock": {
+    "pose": {
+      "bottom": { "tilt": 0.2, "ax": 0.5, "ay": 0.5 },
+      "top": { "tilt": -0.2, "ax": 0.5, "ay": 0.5 },
+      "right": { "tilt": -0.3, "ax": 0.57, "ay": 0.5 },
+      "left": { "tilt": 0.3, "ax": 0.43, "ay": 0.5 }
+    },
+    "verticalWidthRatio": 0.55,
+    "verticalHeightRatio": 0.95,
+    "horizontalHeightRatio": 0.46
+  }
+}

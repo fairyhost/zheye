@@ -1,0 +1,112 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+  cursor: grab;
+}
+
+body.grabbing {
+  cursor: grabbing;
+}
+
+/* 完整形象（未停靠）；停靠收起/悬停弹出的取景规则见下方 .docked 区块 */
+#static-fallback {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  -webkit-user-drag: none;
+}
+
+/* ---------- 停靠收起（加速球式·仅右停靠） ----------
+   窗口只有露出条宽（main.js dockGeom，reveal≈0.35，全程不出屏），
+   贴图以全身尺寸（--pet）锚定左上角，右侧溢出被窗口自身裁掉，
+   露出的就是贴图左半身（左边缘到脚），不需要任何取景偏移 */
+body.docked #static-fallback {
+  width: var(--pet, 200px);
+  height: var(--pet, 200px);
+  object-fit: contain;
+  top: 0;
+  left: 0;
+  right: auto;
+  bottom: auto;
+}
+
+/* 悬停弹出：窗口已恢复全身尺寸，贴图完整居中显示，纸底贴窗口底（像站在那里） */
+body.docked.peeked #static-fallback {
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  right: auto;
+  bottom: auto;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+/* ---------- 状态动画（叠加在帧动画之上） ---------- */
+@keyframes pet-wiggle {
+  0%, 100% { transform: rotate(-6deg) translateY(-1px); }
+  50% { transform: rotate(6deg) translateY(1px); }
+}
+
+#pet.dragging, #static-fallback.dragging {
+  animation: pet-wiggle 0.32s ease-in-out infinite;
+}
+
+@keyframes pet-hop {
+  0% { transform: translateY(0); }
+  30% { transform: translateY(-16px) scale(1.08, 0.92); }
+  60% { transform: translateY(0) scale(0.94, 1.06); }
+  80% { transform: translateY(-5px); }
+  100% { transform: translateY(0); }
+}
+
+#pet.hop {
+  animation: pet-hop 0.5s ease;
+}
+
+/* ---------- 提醒气泡 ---------- */
+#bubble {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 96%;
+  padding: 4px 8px;
+  border-radius: 10px;
+  background: rgba(74, 74, 66, 0.92);
+  color: #fffdf3;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+#bubble.show {
+  opacity: 1;
+}
+
+/* 双重失败兜底 */
+#fallback {
+  display: none;
+  width: 76%;
+  height: 76%;
+  margin: 12%;
+  border-radius: 50% 50% 45% 45%;
+  background: #bfe3c0;
+  border: 3px solid #7fae82;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  color: #4e7a52;
+  font-family: "Microsoft YaHei UI", sans-serif;
+}

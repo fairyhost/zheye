@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <!-- 应用图标设计源：对勾折页（青碧圆角底 + 白便签折角 + 对勾） -->
+  <!-- 由 scripts/make-icon.js 内嵌同款几何栅格化；改这里不会自动生效，需同步改脚本 -->
+  <rect width="96" height="96" rx="22" fill="#2F8F86"/>
+  <path d="M 32 20 H 58 L 72 34 V 68 Q 72 76 64 76 H 32 Q 24 76 24 68 V 28 Q 24 20 32 20 Z" fill="#FFFFFF"/>
+  <path d="M 58 20 L 72 34 H 58 Z" fill="#BFE3DD"/>
+  <path d="M 36 48 L 45 57 L 62 38" stroke="#2F8F86" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

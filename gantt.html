@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'">
+  <link rel="stylesheet" href="gantt.css">
+  <title>甘特图</title>
+</head>
+<body>
+  <!-- 启动骨架屏：预热完成前冷启动时兜底，数据首次渲染后由 gantt.js 移除 -->
+  <div id="boot-skeleton">
+    <div class="sk-tip">正在加载甘特图…</div>
+    <div class="sk-row sk-head"></div>
+    <div class="sk-row w40"></div>
+    <div class="sk-row w25 accent"></div>
+    <div class="sk-row w32"></div>
+    <div class="sk-row w18 red"></div>
+    <div class="sk-row w28"></div>
+    <div class="sk-row w45"></div>
+  </div>
+  <div id="wrap">
+    <div id="toolbar">
+      <span id="g-title">任务进度</span>
+      <span id="g-count"></span>
+      <span id="paging">
+        <button id="prev-btn" title="往前一周" aria-label="上一页"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3 5 8l5 5"/></svg></button>
+        <span id="range-title"></span>
+        <button id="next-btn" title="往后一周" aria-label="下一页"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 3 5 5-5 5"/></svg></button>
+      </span>
+      <span id="gran-seg">
+        <button class="gran" data-days="14">14天</button>
+        <button class="gran active" data-days="28">28天</button>
+        <button class="gran" data-days="56">56天</button>
+      </span>
+      <span id="cfg-wrap">
+        <button id="pin-btn" title="窗口置顶" aria-label="窗口置顶"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h4M6.5 2v3.2c0 .5-.2 1-.5 1.4L4.8 8.2c-.4.5-.1 1.3.6 1.3h5.2c.7 0 1-.8.6-1.3L10 6.6a2.3 2.3 0 0 1-.5-1.4V2M8 9.5V14"/></svg></button>
+        <button id="cfg-btn" title="今日标记样式" aria-label="今日标记样式"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 4.5h8M12.5 4.5H14M2 11.5h1.5M6 11.5h8"/><circle cx="10.75" cy="4.5" r="1.6"/><circle cx="4.25" cy="11.5" r="1.6"/></svg></button>
+        <div id="cfg-panel" hidden>
+          <div class="cfg-title">今日标记样式</div>
+          <label><input type="radio" name="today-style" value="dash">虚线（默认）</label>
+          <label><input type="radio" name="today-style" value="solid">实线 + 三角标</label>
+          <label><input type="radio" name="today-style" value="flag">旗标 + 虚线</label>
+          <label><input type="radio" name="today-style" value="fill">整列底色</label>
+          <label><input type="radio" name="today-style" value="chan">夹线通道</label>
+          <div class="cfg-title">标记颜色</div>
+          <div class="cfg-color-row">
+            <input type="color" id="today-color" value="#f40b0b" title="今日标记颜色">
+            <button type="button" id="today-color-reset">默认</button>
+          </div>
+          <div class="cfg-title">开口条尾部样式</div>
+          <label><input type="radio" name="open-tail" value="fade">渐隐淡出（默认）</label>
+          <label><input type="radio" name="open-tail" value="arrow">箭头收尾</label>
+        </div>
+      </span>
+      <span id="legend"></span>
+    </div>
+    <div id="gridwrap"><div id="grid"></div></div>
+    <div id="status">
+      <span id="outnote" hidden></span>
+      <span id="someday" hidden></span>
+      <span id="hint">点横条或任务名可编辑名称与时间</span>
+    </div>
+    <form id="editor" hidden>
+      <input id="e-name" type="text" maxlength="500">
+      <label>开始<input id="e-sd" type="date"><input id="e-st" type="time"></label>
+      <label>完成<input id="e-dd" type="date"><input id="e-dt" type="time"></label>
+      <button id="e-save" type="submit">保存</button>
+      <button id="e-cancel" type="button">取消</button>
+    </form>
+  </div>
+  <script src="gantt.js"></script>
+</body>
+</html>

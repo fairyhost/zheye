@@ -1,0 +1,588 @@
+/* 桌宠备忘 · 工作清单 —— 晨雾 · 版式3：按日分组
+   冷灰蓝纸面 + 单一青色；分组头（相点+标题+日期），
+   任务行挂到各自日子下；逾期红色置顶分组；
+   甘特图配套改版见 gantt.css */
+:root {
+  --bg: #f4f7f8;
+  --surface: #ffffff;
+  --ink: #2c3840;
+  --muted: #7e8e99;
+  --faint: #adbcc4;
+  --line: #e4ebee;
+  --accent: #2f8f86;
+  --accent-deep: #2b847b;
+  --accent-soft: #e3f2f0;
+  --red: #d05e52;
+  --red-soft: #f7e6e3;
+  --weekend: #eef4f6;
+  --hover: #f2f7f7;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  font-family: "Segoe UI", "Microsoft YaHei UI", "PingFang SC", sans-serif;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* ---------- 标题栏 ---------- */
+#titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 9px;
+  -webkit-app-region: drag;
+  flex: none;
+}
+
+#titlebar .title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .5px;
+  color: var(--ink);
+}
+
+#tb-btns {
+  display: flex;
+  gap: 2px;
+}
+
+#gantt-btn, #close-btn, #pin-btn {
+  -webkit-app-region: no-drag;
+  border: none;
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+  border-radius: 8px;
+  width: 26px;
+  height: 26px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#gantt-btn:hover, #close-btn:hover, #pin-btn:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+/* 置顶图钉：激活态用主题青碧标出 */
+#pin-btn.active {
+  color: var(--accent);
+}
+
+/* ---------- 任务详情悬浮（自绘 tooltip）：收窄宽度，不横贯窗口 ---------- */
+#detail-tip {
+  position: fixed;
+  z-index: 9999;
+  max-width: 300px;
+  max-height: 240px;
+  overflow: auto;
+  background: #fff;
+  border: 0.5px solid rgba(44, 56, 64, .25);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink);
+  box-shadow: 0 6px 18px rgba(44, 56, 64, .18);
+  pointer-events: none;
+}
+
+#detail-tip .tip-desc {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+#detail-tip .tip-hint {
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+/* ---------- 标签页 ---------- */
+#tabs {
+  display: flex;
+  flex: none;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px 2px;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+  border-bottom: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.tab:hover { color: var(--ink); }
+
+.tab.active {
+  color: var(--ink);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
+
+.tab-n {
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: var(--faint);
+}
+
+.tab.active .tab-n {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.tab-n.overdue { color: var(--red); }
+
+/* ---------- 添加栏：幽灵行 ---------- */
+#add-bar {
+  flex: none;
+  padding: 8px 10px 4px;
+}
+
+#add-btn {
+  width: 100%;
+  border: 1px dashed transparent;
+  border-radius: 9px;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--faint);
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+#add-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* ---------- 列表：按日分组 ---------- */
+#task-list {
+  list-style: none;
+  margin: 0;
+  padding: 2px 10px 12px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* 分组头：相点 + 标题 + 右侧日期 */
+.day-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 6px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.day-head .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: .55;
+  flex: none;
+}
+
+.day-head.overdue-h { color: var(--red); }
+.day-head.overdue-h .dot { background: var(--red); opacity: 1; }
+
+/* 今日截止块：青色重点（圆点全亮），进行中块：青色常规（圆点默认弱化，示「还有余量」） */
+.day-head.due-h { color: var(--accent); }
+.day-head.due-h .dot { opacity: 1; }
+.day-head.ongoing-h { color: var(--accent); }
+
+.day-head.muted-h { color: var(--muted); }
+.day-head.muted-h .dot { background: var(--faint); opacity: .8; }
+
+.day-head .dh-date {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 8px 8px 8px 20px;
+  border-radius: 10px;
+  position: relative;
+}
+
+.item:hover { background: var(--hover); }
+
+/* 行首小相点 */
+.item::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 15px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--line);
+}
+
+.item.overdue::before { background: var(--red); }
+
+.check {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 17px;
+  height: 17px;
+  margin: 1px 0 0;
+  flex: none;
+  cursor: pointer;
+  border: 1.5px solid #c2d0d6;
+  border-radius: 50%;
+  background: var(--surface);
+  transition: border-color .15s, background .15s;
+}
+
+.check:hover { border-color: var(--accent); }
+
+.check:checked {
+  background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/11px no-repeat;
+  border-color: var(--accent);
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 行1：标题 + 右对齐时刻 */
+.t-row1 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: text;
+}
+
+.t-time {
+  flex: none;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.flag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 9px;
+  background: var(--weekend);
+  color: var(--muted);
+  font-size: 10px;
+  font-style: normal;
+}
+
+/* 进行中：已开始未到期的跨天任务（思路一驻留「今天」期间标注） */
+.flag.ongoing {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* 行2：时间区间 + 描述摘要 */
+.t-row2 {
+  display: flex;
+  gap: 8px;
+  margin-top: 3px;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.t-row2 .t-range { flex: none; }
+
+.t-row2 .t-desc {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 逾期 */
+.overdue .text {
+  color: var(--red);
+  font-weight: 600;
+}
+
+.overdue .t-time {
+  color: var(--red);
+  font-weight: 600;
+}
+
+/* 完成：整行淡化 */
+.done .text, .done .t-time, .done .t-row2 {
+  color: var(--faint);
+}
+
+@keyframes flashbg {
+  from { background: var(--accent-soft); }
+}
+
+.item.flash {
+  animation: flashbg 1.4s ease;
+}
+
+.del {
+  visibility: hidden;
+  border: none;
+  background: none;
+  color: var(--faint);
+  cursor: pointer;
+  font-size: 13px;
+  flex: none;
+  margin-top: 1px;
+}
+
+.item:hover .del {
+  visibility: visible;
+}
+
+.del:hover {
+  color: var(--red);
+}
+
+#empty-hint {
+  text-align: center;
+  color: var(--faint);
+  font-size: 11px;
+  padding: 24px 0;
+}
+
+/* ---------- 任务弹窗 ---------- */
+#task-dialog {
+  position: absolute;
+  inset: 0;
+  background: rgba(44, 56, 64, 0.4);
+  z-index: 20;
+  padding: 12px;
+}
+
+#task-dialog:not([hidden]) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#td-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(44, 56, 64, 0.18);
+  padding: 12px 14px;
+}
+
+#td-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+#td-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+#td-close {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 6px;
+  width: 22px;
+  height: 22px;
+  line-height: 1;
+}
+
+#td-close:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+#td-text, #td-desc {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 9px;
+  font-size: 13px;
+  background: var(--surface);
+  color: var(--ink);
+  outline-color: var(--accent);
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+#td-desc {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+#td-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+#task-dialog .chip {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  border-radius: 10px;
+  padding: 2px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+#task-dialog .chip:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dt > span {
+  font-size: 11px;
+  color: var(--muted);
+  flex: none;
+  width: 24px;
+}
+
+.dt input, .dt textarea {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  min-width: 0;
+}
+
+.dt textarea {
+  flex: 1;
+  resize: vertical;
+}
+
+#td-btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+#td-btns button {
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+#td-save {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+#td-save:hover {
+  background: var(--accent-deep);
+}
+
+#td-cancel {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+}
+
+#td-cancel:hover {
+  background: var(--hover);
+}
+
+/* ---------- 滚动条（晨雾风格细胶囊，与 gantt 统一） ---------- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(44, 56, 64, 0.25);
+  border-radius: 8px;
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(44, 56, 64, 0.4);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: rgba(44, 56, 64, 0.55);
+}
