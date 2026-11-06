@@ -1,13 +1,13 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-contextBridge.exposeInMainWorld('petAPI', {
-  dragStart: () => ipcRenderer.send('pet:drag-start'),
-  dragEnd: () => ipcRenderer.send('pet:drag-end'),
-  toggleMemo: () => ipcRenderer.send('pet:toggle-memo'),
-  showMenu: () => ipcRenderer.send('pet:menu'),
-  setPeek: (on) => ipcRenderer.send('pet:peek', !!on),
-  onBubble: (cb) => ipcRenderer.on('pet:bubble', (_e, p) => cb(p)),
-  onDockState: (cb) => ipcRenderer.on('pet:dock-state', (_e, s) => cb(s)),
+contextBridge.exposeInMainWorld('widgetAPI', {
+  dragStart: () => ipcRenderer.send('widget:drag-start'),
+  dragEnd: () => ipcRenderer.send('widget:drag-end'),
+  toggleMemo: () => ipcRenderer.send('widget:toggle-memo'),
+  showMenu: () => ipcRenderer.send('widget:menu'),
+  setPeek: (on) => ipcRenderer.send('widget:peek', !!on),
+  onBubble: (cb) => ipcRenderer.on('widget:bubble', (_e, p) => cb(p)),
+  onDockState: (cb) => ipcRenderer.on('widget:dock-state', (_e, s) => cb(s)),
 });
 
 contextBridge.exposeInMainWorld('memoAPI', {

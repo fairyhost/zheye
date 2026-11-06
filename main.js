@@ -42,19 +42,31 @@ const DOCK_DWELL_MS = 500; // 顶住边缘多久才吸附（防止路过/停放�
 
 const tasksStore = new Store('tasks.json', { items: [] });
 const configStore = new Store('config.json', {
-  petHeight: 200,
-  petPos: null,
+  widgetHeight: 200,
+  widgetPos: null,
   memoSize: { width: 360, height: 520 },
   ganttSize: { width: 1000, height: 640 },
   ganttPos: null,
   expanded: false,
-  memoPinned: true,    // 清单窗置顶（floating 层级：压普通窗口、低于桌宠 screen-saver）
+  memoPinned: true,    // 清单窗置顶（floating 层级：压普通窗口、低于挂件 screen-saver）
   ganttPinned: true,   // 甘特窗置顶，同上
   dock: null,          // {side, along, displayId}；null=未停靠
   dockPeekMode: 'hover', // 停靠后行为：hover=悬停弹出（默认）/ pinned=固定收起不弹出
   // （提醒时机不再可配：日期类任务当天 09:30，带时间任务提前 5 分钟）
   firstRunDone: false,
 });
+
+// 旧配置键迁移：petHeight/petPos -> widgetHeight/widgetPos（一次性，保留老用户已调好的尺寸/位置）
+if (configStore.data.petHeight != null && configStore.data.widgetHeight == null) {
+  configStore.data.widgetHeight = configStore.data.petHeight;
+  delete configStore.data.petHeight;
+  configStore.save();
+}
+if (configStore.data.petPos && !configStore.data.widgetPos) {
+  configStore.data.widgetPos = configStore.data.petPos;
+  delete configStore.data.petPos;
+  configStore.save();
+}
 
 // 数据目录管理：注册后可运行中切换存储位置（事务式，见 dataDir.js 头注释）
 const dataDir = require('./dataDir');
@@ -64,15 +76,15 @@ dataDir.registerStore(configStore);
 // 皮肤包：manifest 驱动尺寸/动画/行为参数
 const SKIN_DIR = path.join(__dirname, 'skins', 'note');
 const manifest = JSON.parse(fs.readFileSync(path.join(SKIN_DIR, 'manifest.json'), 'utf8'));
-// 静态形象模式：桌宠回到最早期的静态贴图，自主行为引擎（溜达/情绪/睡觉）暂不启用（清单功能优先）
+// 静态形象模式：挂件回到最早期的静态贴图，自主行为引擎（溜达/情绪/睡觉）暂不启用（清单功能优先）
 // 旧尺寸迁移到当前皮肤档位（向上取档）
-if (!Object.values(manifest.sizes).includes(configStore.data.petHeight)) {
+if (!Object.values(manifest.sizes).includes(configStore.data.widgetHeight)) {
   const sorted = Object.values(manifest.sizes).sort((a, b) => a - b);
-  configStore.data.petHeight = sorted.find((h) => h >= configStore.data.petHeight) || sorted[sorted.length - 1];
+  configStore.data.widgetHeight = sorted.find((h) => h >= configStore.data.widgetHeight) || sorted[sorted.length - 1];
   configStore.save();
 }
 
-let petWin = null;
+let widgetWin = null;
 let memoWin = null;
 let askWin = null;
 let ganttWin = null;
@@ -140,8 +152,8 @@ if (!tasksStore.existed) {
 
 // ---------- 宠物窗口 ----------
 function createPet() {
-  const h = configStore.data.petHeight || 160;
-  petWin = new BrowserWindow({
+  const h = configStore.data.widgetHeight || 160;
+  widgetWin = new BrowserWindow({
     width: h,
     height: h,
     transparent: true,
@@ -155,13 +167,13 @@ function createPet() {
     maximizable: false,
     webPreferences: { preload: path.join(__dirname, 'preload.js') },
   });
-  petWin.setAlwaysOnTop(true, 'screen-saver');
-  hookDevTools(petWin);
-  petWin.loadFile('pet.html');
-  petWin.webContents.on('did-finish-load', () => {
+  widgetWin.setAlwaysOnTop(true, 'screen-saver');
+  hookDevTools(widgetWin);
+  widgetWin.loadFile('widget.html');
+  widgetWin.webContents.on('did-finish-load', () => {
     sendDockState();
   });
-  petWin.on('closed', () => { petWin = null; });
+  widgetWin.on('closed', () => { widgetWin = null; });
 }
 
 // 上次位置超出当前所有屏幕时返回 null，调用方走兜底
@@ -190,22 +202,22 @@ function findDisplayForDock(dock) {
   return hit || screen.getPrimaryDisplay();
 }
 
-function dockGeom(dock, petH) {
+function dockGeom(dock, widgetH) {
   // 收起态（加速球式·仅右停靠）：窗口只占露出条宽度（reveal），贴图以全身尺寸渲染、
-  // 右侧溢出被窗口自身裁掉（pet.css body.docked 左上角锚定 + overflow hidden），
+  // 右侧溢出被窗口自身裁掉（widget.css body.docked 左上角锚定 + overflow hidden），
   // 露出的就是贴图左半身（从左边缘到脚）。
   // 窗口全程不出屏——不依赖"推出屏幕外靠屏幕边裁切"，规避越界窗口在 Windows 上的
   // setBounds 成功但视觉不更新、DPI/多屏边缘怪癖等问题
-  const revealW = Math.max(Math.round(petH * (manifest.dock.reveal || 0.35)), 24);
+  const revealW = Math.max(Math.round(widgetH * (manifest.dock.reveal || 0.35)), 24);
   const a = findDisplayForDock(dock).workArea;
   const clampAlong = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
   // along 脏数据防御：null/NaN 会让 y 计算成 NaN，窗口被系统扔到屏幕外
   const along = Number.isFinite(dock.along) ? dock.along : a.y + a.height / 2;
   return {
     x: a.x + a.width - revealW,
-    y: clampAlong(along - petH / 2, a.y, a.y + a.height - petH),
+    y: clampAlong(along - widgetH / 2, a.y, a.y + a.height - widgetH),
     width: revealW,
-    height: petH,
+    height: widgetH,
   };
 }
 
@@ -218,35 +230,35 @@ function isOuterRightEdge(d) {
 }
 
 // 悬停弹出态：全身尺寸贴着停靠边，沿边位置不变
-function dockExpandedGeom(dock, petH) {
+function dockExpandedGeom(dock, widgetH) {
   const a = findDisplayForDock(dock).workArea;
   const clampAlong = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
   const along = Number.isFinite(dock.along) ? dock.along : a.y + a.height / 2;
   if (dock.side === 'top') {
-    return { x: clampAlong(along - petH / 2, a.x, a.x + a.width - petH), y: a.y, width: petH, height: petH };
+    return { x: clampAlong(along - widgetH / 2, a.x, a.x + a.width - widgetH), y: a.y, width: widgetH, height: widgetH };
   }
   if (dock.side === 'bottom') {
-    return { x: clampAlong(along - petH / 2, a.x, a.x + a.width - petH), y: a.y + a.height - petH, width: petH, height: petH };
+    return { x: clampAlong(along - widgetH / 2, a.x, a.x + a.width - widgetH), y: a.y + a.height - widgetH, width: widgetH, height: widgetH };
   }
   if (dock.side === 'left') {
-    return { x: a.x, y: clampAlong(along - petH / 2, a.y, a.y + a.height - petH), width: petH, height: petH };
+    return { x: a.x, y: clampAlong(along - widgetH / 2, a.y, a.y + a.height - widgetH), width: widgetH, height: widgetH };
   }
-  return { x: a.x + a.width - petH, y: clampAlong(along - petH / 2, a.y, a.y + a.height - petH), width: petH, height: petH };
+  return { x: a.x + a.width - widgetH, y: clampAlong(along - widgetH / 2, a.y, a.y + a.height - widgetH), width: widgetH, height: widgetH };
 }
 
 function applyDock(win, dock) {
-  const petH = configStore.data.petHeight || 160;
-  const g = dockGeom(dock, petH);
+  const widgetH = configStore.data.widgetHeight || 160;
+  const g = dockGeom(dock, widgetH);
   peeked = false; // 任何吸附/尺寸重置都回到收起态
   win.setBounds(g);
   sendDockState();
 }
 
 function sendDockState() {
-  if (petWin && !petWin.isDestroyed()) {
+  if (widgetWin && !widgetWin.isDestroyed()) {
     const dock = dragState ? dragState.dock : configStore.data.dock;
     const peeking = !!dock && peeked && (!dragState || dragState.peekDrag);
-    petWin.webContents.send('pet:dock-state', { docked: !!dock, side: dock ? dock.side : null, peeked: peeking, pet: configStore.data.petHeight || 160, peekMode: dockPeekMode() });
+    widgetWin.webContents.send('widget:dock-state', { docked: !!dock, side: dock ? dock.side : null, peeked: peeking, widget: configStore.data.widgetHeight || 160, peekMode: dockPeekMode() });
   }
 }
 
@@ -277,7 +289,7 @@ function setDockPeekMode(mode) {
 
 function setPeek(on) {
   const dock = configStore.data.dock;
-  if (!petWin || petWin.isDestroyed() || !dock || dragState) {
+  if (!widgetWin || widgetWin.isDestroyed() || !dock || dragState) {
     tracePeek(`setPeek(${on}) skip: ${!dock ? 'no-dock' : dragState ? 'dragging' : 'no-win'}`);
     return;
   }
@@ -291,9 +303,9 @@ function setPeek(on) {
   if (!on && Date.now() < peekCooldownUntil) return;
   peeked = !!on;
   if (on) peekCooldownUntil = Date.now() + 250; // 弹出后 250ms 内不收回，防尺寸切换瞬间误判抖动
-  const petH = configStore.data.petHeight || 160;
-  petWin.setBounds(peeked ? dockExpandedGeom(dock, petH) : dockGeom(dock, petH));
-  tracePeek(`setPeek(${on}) ok, bounds=${JSON.stringify(petWin.getBounds())}`);
+  const widgetH = configStore.data.widgetHeight || 160;
+  widgetWin.setBounds(peeked ? dockExpandedGeom(dock, widgetH) : dockGeom(dock, widgetH));
+  tracePeek(`setPeek(${on}) ok, bounds=${JSON.stringify(widgetWin.getBounds())}`);
   sendDockState();
 }
 
@@ -306,8 +318,8 @@ function ensurePeekWatchdog() {
   // 停靠完成后会误判一次"进入"导致刚收起就弹出
   let prevInside = null;
   peekWatchdog = setInterval(() => {
-    if (!petWin || petWin.isDestroyed()) return;
-    const b = petWin.getBounds();
+    if (!widgetWin || widgetWin.isDestroyed()) return;
+    const b = widgetWin.getBounds();
     const c = screen.getCursorScreenPoint();
     const inside = c.x >= b.x - 2 && c.x < b.x + b.width + 2
       && c.y >= b.y - 2 && c.y < b.y + b.height + 2;
@@ -324,27 +336,27 @@ function ensurePeekWatchdog() {
 }
 
 function placePetInitially() {
-  const petH = configStore.data.petHeight || 160;
+  const widgetH = configStore.data.widgetHeight || 160;
   // 有停靠记忆且是右停靠 → 直接恢复收起姿态（只支持右停靠）。
   // along 脏数据（NaN/null）或停靠边不是真实外缘（如两屏交界）→ 清除停靠走自由位置兜底
   const dock = configStore.data.dock;
   if (dock && dock.side === 'right') {
     const d = findDisplayForDock(dock);
     if (Number.isFinite(dock.along) && isOuterRightEdge(d)) {
-      petWin.setBounds(dockGeom(dock, petH));
+      widgetWin.setBounds(dockGeom(dock, widgetH));
       return;
     }
     configStore.data.dock = null;
     configStore.save();
   }
   configStore.data.dock = null;
-  const b = petWin.getBounds();
-  const pos = validPos(configStore.data.petPos, b.width, b.height);
+  const b = widgetWin.getBounds();
+  const pos = validPos(configStore.data.widgetPos, b.width, b.height);
   if (pos) {
-    petWin.setPosition(pos.x, pos.y);
+    widgetWin.setPosition(pos.x, pos.y);
   } else {
     const wa = screen.getPrimaryDisplay().workArea;
-    petWin.setPosition(wa.x + wa.width - b.width - 32, wa.y + wa.height - b.height - 32);
+    widgetWin.setPosition(wa.x + wa.width - b.width - 32, wa.y + wa.height - b.height - 32);
   }
 }
 
@@ -363,7 +375,7 @@ function createMemo() {
     icon: path.join(__dirname, 'assets', 'icon.ico'),
     webPreferences: { preload: path.join(__dirname, 'preload.js') },
   });
-  // 置顶用 floating 层级：高于普通窗口、低于桌宠的 screen-saver（层级序 floating < screen-saver）
+  // 置顶用 floating 层级：高于普通窗口、低于挂件的 screen-saver（层级序 floating < screen-saver）
   if (configStore.data.memoPinned !== false) memoWin.setAlwaysOnTop(true, 'floating');
   hookDevTools(memoWin);
   memoWin.loadFile('memo.html');
@@ -392,11 +404,11 @@ function hideMemo() {
   configStore.save();
 }
 
-// 清单窗目标位置：贴着桌宠旁边（右侧放不下翻到左侧，夹在显示器工作区内）。
+// 清单窗目标位置：贴着挂件旁边（右侧放不下翻到左侧，夹在显示器工作区内）。
 // 不依赖窗口可见——setPosition 对隐藏窗口同样生效，供"先定位后显示"用
 function memoTargetPos() {
-  if (!petWin || petWin.isDestroyed()) return null;
-  const pb = petWin.getBounds();
+  if (!widgetWin || widgetWin.isDestroyed()) return null;
+  const pb = widgetWin.getBounds();
   const m = memoWin && !memoWin.isDestroyed()
     ? memoWin.getBounds()
     : { width: configStore.data.memoSize.width, height: configStore.data.memoSize.height };
@@ -417,8 +429,8 @@ function placeMemoNearPet() {
 function openMemo() {
   if (!memoWin) {
     createMemo();
-    // 关键：先在隐藏状态定位到桌宠当前位置旁，再显示。
-    // 旧顺序是先 show（出现在上次旧位置）再移动过去，拖动桌宠后点击会看到明显跳位
+    // 关键：先在隐藏状态定位到挂件当前位置旁，再显示。
+    // 旧顺序是先 show（出现在上次旧位置）再移动过去，拖动挂件后点击会看到明显跳位
     const p = memoTargetPos();
     if (p) memoWin.setPosition(p.x, p.y);
     memoWin.once('ready-to-show', () => memoWin.show());
@@ -547,12 +559,12 @@ function resetDataLocation() {
   }
 }
 
-// 导入/导出结果反馈：系统通知 + 桌宠气泡，导入后再把清单窗打开让用户确认
+// 导入/导出结果反馈：系统通知 + 挂件气泡，导入后再把清单窗打开让用户确认
 function notifyDone(title, body) {
   try {
     if (Notification.isSupported()) new Notification({ title, body, silent: true }).show();
   } catch (_e) { /* 尽力而为 */ }
-  petWin?.webContents.send('pet:bubble', { text: body.slice(0, 24) });
+  widgetWin?.webContents.send('widget:bubble', { text: body.slice(0, 24) });
   openMemo();
 }
 
@@ -584,8 +596,8 @@ function createTray() {
 }
 
 // ---------- 右键菜单 ----------
-function petMenu() {
-  const cur = configStore.data.petHeight;
+function widgetMenu() {
+  const cur = configStore.data.widgetHeight;
   return Menu.buildFromTemplate([
     { label: '开机启动', type: 'checkbox', checked: getAutoStart(), click: (item) => setAutoStart(item.checked) },
     { label: '解除停靠', visible: !!configStore.data.dock, click: () => undockDock() },
@@ -623,35 +635,35 @@ function petMenu() {
 }
 
 function setPetHeight(h) {
-  configStore.data.petHeight = h;
+  configStore.data.widgetHeight = h;
   configStore.save();
-  if (!petWin || petWin.isDestroyed()) return;
+  if (!widgetWin || widgetWin.isDestroyed()) return;
   if (dragState?.dock) {
-    applyDock(petWin, dragState.dock);
+    applyDock(widgetWin, dragState.dock);
     configStore.data.dock = { ...dragState.dock };
     configStore.save();
     return;
   }
   if (configStore.data.dock) {
-    applyDock(petWin, configStore.data.dock);
+    applyDock(widgetWin, configStore.data.dock);
     return;
   }
-  const b = petWin.getBounds();
-  petWin.setBounds({
+  const b = widgetWin.getBounds();
+  widgetWin.setBounds({
     x: Math.round(b.x + (b.width - h) / 2),
     y: Math.round(b.y + (b.height - h)), // 底边不动，像站在原地缩放
     width: h,
     height: h,
   });
-  const nb = petWin.getBounds();
-  configStore.data.petPos = { x: nb.x, y: nb.y };
+  const nb = widgetWin.getBounds();
+  configStore.data.widgetPos = { x: nb.x, y: nb.y };
   configStore.save();
   if (memoWin && memoWin.isVisible()) placeMemoNearPet();
 }
 
 // ---------- 拖拽（主进程 16ms 轮询光标——光标跑出窗口也跟手；停靠需顶边停留 500ms） ----------
 function onDragTick() {
-  if (!dragState || !petWin || petWin.isDestroyed()) return;
+  if (!dragState || !widgetWin || widgetWin.isDestroyed()) return;
   const c = screen.getCursorScreenPoint();
 
   // ---- 停靠中 ----
@@ -673,14 +685,14 @@ function onDragTick() {
       configStore.data.dock = null;
       configStore.save();
       if (!wasPeek) {
-        const petH = configStore.data.petHeight || 160;
-        petWin.setBounds({
-          x: c.x - Math.round(petH / 2),
-          y: c.y - Math.round(petH * 0.25),
-          width: petH,
-          height: petH,
+        const widgetH = configStore.data.widgetHeight || 160;
+        widgetWin.setBounds({
+          x: c.x - Math.round(widgetH / 2),
+          y: c.y - Math.round(widgetH * 0.25),
+          width: widgetH,
+          height: widgetH,
         });
-        const b2 = petWin.getBounds();
+        const b2 = widgetWin.getBounds();
         dragState.offX = c.x - b2.x;
         dragState.offY = c.y - b2.y;
       }
@@ -699,9 +711,9 @@ function onDragTick() {
           + ((dock.side === 'top' || dock.side === 'bottom') ? c.x - dragState.startX : c.y - dragState.startY);
         if (dragState.peekDrag) {
           peekCooldownUntil = Date.now() + 250;
-          petWin.setBounds(dockExpandedGeom(dock, configStore.data.petHeight || 160));
+          widgetWin.setBounds(dockExpandedGeom(dock, configStore.data.widgetHeight || 160));
         } else {
-          applyDock(petWin, dock);
+          applyDock(widgetWin, dock);
         }
       }
       return;
@@ -711,12 +723,12 @@ function onDragTick() {
   // ---- 未停靠自由移动 ----
   const x = c.x - dragState.offX;
   const y = c.y - dragState.offY;
-  petWin.setPosition(x, y);
+  widgetWin.setPosition(x, y);
 
   // 顶到边且停留 DOCK_DWELL_MS 才吸附（跨屏路过/短暂停放都不触发）
-  // 按桌宠窗口边缘判定（光标抓在身子中间时离边还有几十像素，按光标判永远吸不上）
+  // 按挂件窗口边缘判定（光标抓在身子中间时离边还有几十像素，按光标判永远吸不上）
   // 只支持右停靠（收进右缘、露出左半身）；其他边缘不吸附
-  const b = petWin.getBounds();
+  const b = widgetWin.getBounds();
   const dp = screen.getDisplayNearestPoint({ x: b.x + b.width / 2, y: b.y + b.height / 2 });
   const a = dp.workArea;
   const dRight = a.x + a.width - (b.x + b.width);
@@ -727,7 +739,7 @@ function onDragTick() {
       // 锁定当前显示器，沿边滑动时不串屏
       dragState.dock = { side: 'right', along: c.y, displayId: dp.id };
       dragState.startAlong = c.y; // 吸附基准：此后沿边滑动以吸附点为原点
-      applyDock(petWin, dragState.dock);
+      applyDock(widgetWin, dragState.dock);
       return;
     }
   } else {
@@ -753,25 +765,25 @@ function undockDock() {
   configStore.data.dock = null;
   peeked = false;
   if (dragState) dragState.dock = null;
-  const petH = configStore.data.petHeight || 160;
-  let pos = validPos(configStore.data.petPos, petH, petH);
+  const widgetH = configStore.data.widgetHeight || 160;
+  let pos = validPos(configStore.data.widgetPos, widgetH, widgetH);
   if (!pos) {
     const wa = screen.getPrimaryDisplay().workArea;
-    pos = { x: wa.x + Math.round((wa.width - petH) / 2), y: wa.y + Math.round((wa.height - petH) / 2) };
+    pos = { x: wa.x + Math.round((wa.width - widgetH) / 2), y: wa.y + Math.round((wa.height - widgetH) / 2) };
   }
-  if (petWin && !petWin.isDestroyed()) {
-    petWin.setBounds({ x: pos.x, y: pos.y, width: petH, height: petH });
+  if (widgetWin && !widgetWin.isDestroyed()) {
+    widgetWin.setBounds({ x: pos.x, y: pos.y, width: widgetH, height: widgetH });
   }
-  configStore.data.petPos = { x: pos.x, y: pos.y };
+  configStore.data.widgetPos = { x: pos.x, y: pos.y };
   configStore.save();
   sendDockState();
 }
 
-ipcMain.on('pet:drag-start', () => {
+ipcMain.on('widget:drag-start', () => {
   tracePeek('drag-start');
-  if (!petWin || petWin.isDestroyed()) return;
+  if (!widgetWin || widgetWin.isDestroyed()) return;
   const c = screen.getCursorScreenPoint();
-  const b = petWin.getBounds();
+  const b = widgetWin.getBounds();
   dragState = {
     offX: c.x - b.x,
     offY: c.y - b.y,
@@ -790,14 +802,14 @@ ipcMain.on('pet:drag-start', () => {
   // 用户接触：唤醒 + 打断自主行为（挣扎动画由渲染进程本地切，这里不发 idle 覆盖）
 });
 
-ipcMain.on('pet:drag-end', () => {
+ipcMain.on('widget:drag-end', () => {
   // 防双发：mouseup 和 blur 都会触发 endDrag，第二次进来时 dragState 已清空。
   // 若不拦截，会误走"自由拖拽收尾"分支把 configStore.data.dock 清掉，
   // 停靠状态被悄悄抹掉后 setPeek 的 !dock 守卫让收放永久失效（卡在弹出态）。
   if (!dragState) return;
   tracePeek(`drag-end, dock=${JSON.stringify(dragState.dock)}`);
   stopDragPoll();
-  if (petWin && !petWin.isDestroyed()) {
+  if (widgetWin && !widgetWin.isDestroyed()) {
     if (dragState?.dock) {
       if (Number.isFinite(dragState.dock.along)) {
         configStore.data.dock = { ...dragState.dock };
@@ -807,7 +819,7 @@ ipcMain.on('pet:drag-end', () => {
         // 而主进程 setPeek 因 no-dock 全部拒绝 → 悬停/左键全部静默失效
         configStore.data.dock = null;
         peeked = false;
-        const cb = petWin.getBounds();
+        const cb = widgetWin.getBounds();
         const wa2 = screen.getDisplayNearestPoint({ x: cb.x + cb.width / 2, y: cb.y + cb.height / 2 }).workArea;
         const nb = {
           x: Math.min(Math.max(cb.x, wa2.x), wa2.x + wa2.width - cb.width),
@@ -815,14 +827,14 @@ ipcMain.on('pet:drag-end', () => {
           width: cb.width,
           height: cb.height,
         };
-        petWin.setBounds(nb);
-        configStore.data.petPos = { x: nb.x, y: nb.y };
+        widgetWin.setBounds(nb);
+        configStore.data.widgetPos = { x: nb.x, y: nb.y };
       }
     } else {
       configStore.data.dock = null;
       peeked = false;
-      const b = petWin.getBounds();
-      configStore.data.petPos = { x: b.x, y: b.y };
+      const b = widgetWin.getBounds();
+      configStore.data.widgetPos = { x: b.x, y: b.y };
     }
     configStore.save();
   }
@@ -830,12 +842,12 @@ ipcMain.on('pet:drag-end', () => {
   sendDockState(); // 拖拽结束统一同步一次，任何分支都不允许留状态差
 });
 
-ipcMain.on('pet:toggle-memo', () => {
+ipcMain.on('widget:toggle-memo', () => {
   tracePeek('click → toggle-memo');
   toggleMemo();
 });
-ipcMain.on('pet:menu', () => { if (petWin) petMenu().popup({ window: petWin }); });
-ipcMain.on('pet:peek', (_e, on) => {
+ipcMain.on('widget:menu', () => { if (widgetWin) widgetMenu().popup({ window: widgetWin }); });
+ipcMain.on('widget:peek', (_e, on) => {
   tracePeek(`peek IPC: ${!!on}, docked=${!!configStore.data.dock}, peeked=${peeked}, dragging=${!!dragState}`);
   setPeek(!!on);
 });
@@ -862,7 +874,7 @@ function createGanttWindow() {
     autoHideMenuBar: true,
     webPreferences: { preload: path.join(__dirname, 'preload.js') },
   });
-  // 置顶用 floating 层级：高于普通窗口、低于桌宠的 screen-saver
+  // 置顶用 floating 层级：高于普通窗口、低于挂件的 screen-saver
   if (configStore.data.ganttPinned !== false) ganttWin.setAlwaysOnTop(true, 'floating');
   hookDevTools(ganttWin);
   ganttWin.loadFile('gantt.html');
@@ -970,7 +982,7 @@ function scanReminders() {
   });
   n.on('click', () => openMemo());
   try { n.show(); } catch (_e) { /* 通知失败不影响主流程 */ }
-  petWin?.webContents.send('pet:bubble', {
+  widgetWin?.webContents.send('widget:bubble', {
     text: due.length === 1 ? `⏰ ${first.text.slice(0, 14)}` : `⏰ ${due.length} 个任务到期`,
   });
 }
@@ -985,7 +997,7 @@ function broadcastTasks() {
 
 ipcMain.handle('memo:get-state', () => ({ tasks: tasksStore.data.items }));
 
-// 窗口置顶开关（图钉）：floating 层级——压普通窗口、低于桌宠
+// 窗口置顶开关（图钉）：floating 层级——压普通窗口、低于挂件
 ipcMain.handle('win:get-pinned', (_e, which) =>
   which === 'gantt' ? configStore.data.ganttPinned !== false : configStore.data.memoPinned !== false);
 ipcMain.handle('win:set-pinned', (_e, { which, pinned }) => {
@@ -1062,7 +1074,7 @@ if (!gotLock) {
     trace('whenReady fired');
     app.setAccessibilitySupportEnabled(true); // 供 UIA 自动化测试访问界面元素
     createPet();
-    trace('pet window created');
+    trace('widget window created');
     createTray();
     placePetInitially();
     ensurePeekWatchdog();
@@ -1080,20 +1092,20 @@ if (!gotLock) {
       setTimeout(async () => {
         const dump = {
           displays: screen.getAllDisplays().map((d) => ({ id: d.id, workArea: d.workArea })),
-          pet: petWin ? { bounds: petWin.getBounds(), visible: petWin.isVisible() } : null,
+          widget: widgetWin ? { bounds: widgetWin.getBounds(), visible: widgetWin.isVisible() } : null,
           memo: memoWin ? { bounds: memoWin.getBounds(), visible: memoWin.isVisible() } : null,
           gantt: ganttWin ? { bounds: ganttWin.getBounds(), visible: ganttWin.isVisible() } : null,
           dock: configStore.data.dock,
           dock: configStore.data.dock,
-          petPos: configStore.data.petPos,
-          petHeight: configStore.data.petHeight,
+          widgetPos: configStore.data.widgetPos,
+          widgetHeight: configStore.data.widgetHeight,
           tasks: tasksStore.data.items.length,
           autoStart: getAutoStart(),
           firstRunDone: configStore.data.firstRunDone,
         };
         try {
-          if (petWin) {
-            dump.renderer = await petWin.webContents.executeJavaScript(
+          if (widgetWin) {
+            dump.renderer = await widgetWin.webContents.executeJavaScript(
               "({ skin: (typeof manifest !== 'undefined' && manifest) ? manifest.id : null, sheetLoaded: (typeof sheet !== 'undefined') ? !!sheet : null, anim: (typeof anim !== 'undefined') ? anim.name : null })"
             );
           }
@@ -1105,8 +1117,8 @@ if (!gotLock) {
         // 再等 6 秒复查图集是否加载完成（网络服务崩溃重启后的恢复情况）
         setTimeout(async () => {
           try {
-            if (petWin) {
-              dump.renderer2 = await petWin.webContents.executeJavaScript(
+            if (widgetWin) {
+              dump.renderer2 = await widgetWin.webContents.executeJavaScript(
                 "({ sheetLoaded: (typeof sheet !== 'undefined') ? !!sheet : null, anim: (typeof anim !== 'undefined') ? anim.name : null })"
               );
             }
@@ -1119,7 +1131,7 @@ if (!gotLock) {
   });
 
   app.on('second-instance', () => {
-    if (petWin && !petWin.isDestroyed()) petWin.show();
+    if (widgetWin && !widgetWin.isDestroyed()) widgetWin.show();
   });
 
   app.on('window-all-closed', () => app.quit());
@@ -1127,9 +1139,9 @@ if (!gotLock) {
   app.on('before-quit', () => {
     quitting = true;
     try {
-      if (petWin && !petWin.isDestroyed() && !configStore.data.dock) {
-        const b = petWin.getBounds();
-        configStore.data.petPos = { x: b.x, y: b.y };
+      if (widgetWin && !widgetWin.isDestroyed() && !configStore.data.dock) {
+        const b = widgetWin.getBounds();
+        configStore.data.widgetPos = { x: b.x, y: b.y };
       }
       configStore.data.expanded = !!(memoWin && !memoWin.isDestroyed() && memoWin.isVisible());
       configStore.save();

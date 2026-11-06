@@ -1,10 +1,10 @@
-// 静态形象模式：桌宠以最早期的静态贴图呈现
+// 静态渲染模式：挂件以静态贴图呈现
 const staticImg = document.getElementById('static-fallback');
 const bubble = document.getElementById('bubble');
 
 // ---------- 停靠状态（主进程把窗口裁成收起条，贴图保持全身尺寸由窗口裁切；peeked=悬停弹出的全身态） ----------
 let peekMode = 'hover'; // hover=悬停弹出（默认）/ pinned=固定收起
-window.petAPI.onDockState(({ docked, side, peeked, pet, peekMode: mode }) => {
+window.widgetAPI.onDockState(({ docked, side, peeked, widget, peekMode: mode }) => {
   const b = document.body;
   if (mode) peekMode = mode;
   b.classList.toggle('docked', !!docked);
@@ -12,7 +12,7 @@ window.petAPI.onDockState(({ docked, side, peeked, pet, peekMode: mode }) => {
   b.classList.remove('side-top', 'side-bottom', 'side-left', 'side-right');
   if (docked && side) b.classList.add('side-' + side);
   // 全身尺寸（px）：收起态贴图按它渲染，窗口只露出一条
-  if (pet) b.style.setProperty('--pet', pet + 'px');
+  if (widget) b.style.setProperty('--widget', widget + 'px');
   if (docked) b.classList.remove('grabbing');
 });
 
@@ -20,18 +20,18 @@ window.petAPI.onDockState(({ docked, side, peeked, pet, peekMode: mode }) => {
 document.body.addEventListener('mouseenter', () => {
   const b = document.body;
   if (b.classList.contains('docked') && !b.classList.contains('grabbing')) {
-    window.petAPI.setPeek(true);
+    window.widgetAPI.setPeek(true);
   }
 });
 document.body.addEventListener('mouseleave', () => {
   if (document.body.classList.contains('docked')) {
-    window.petAPI.setPeek(false);
+    window.widgetAPI.setPeek(false);
   }
 });
 
 // ---------- 提醒气泡 ----------
 let bubbleTimer = 0;
-window.petAPI.onBubble(({ text }) => {
+window.widgetAPI.onBubble(({ text }) => {
   bubble.textContent = text;
   bubble.hidden = false;
   bubble.classList.add('show');
@@ -51,12 +51,12 @@ document.body.addEventListener('mousedown', (e) => {
   pressX = e.screenX;
   pressY = e.screenY;
   pressAt = Date.now();
-  window.petAPI.dragStart();
+  window.widgetAPI.dragStart();
 });
 
 function endDrag() {
   document.body.classList.remove('grabbing');
-  window.petAPI.dragEnd();
+  window.widgetAPI.dragEnd();
 }
 
 window.addEventListener('mouseup', (e) => {
@@ -68,9 +68,9 @@ window.addEventListener('mouseup', (e) => {
     // 悬停弹出模式：收起态点击 → 先弹出全身（加速球交互）；
     // 固定收起模式：点击直接开关清单；弹出态/自由态点击 → 开关清单
     if (b.classList.contains('docked') && !b.classList.contains('peeked') && peekMode === 'hover') {
-      window.petAPI.setPeek(true);
+      window.widgetAPI.setPeek(true);
     } else {
-      window.petAPI.toggleMemo();
+      window.widgetAPI.toggleMemo();
     }
   }
 });
@@ -78,5 +78,5 @@ window.addEventListener('blur', endDrag);
 
 window.addEventListener('contextmenu', (e) => {
   e.preventDefault();
-  window.petAPI.showMenu();
+  window.widgetAPI.showMenu();
 });

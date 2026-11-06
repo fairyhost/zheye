@@ -23,11 +23,11 @@ body.grabbing {
 
 /* ---------- 停靠收起（加速球式·仅右停靠） ----------
    窗口只有露出条宽（main.js dockGeom，reveal≈0.35，全程不出屏），
-   贴图以全身尺寸（--pet）锚定左上角，右侧溢出被窗口自身裁掉，
+   贴图以全身尺寸（--widget）锚定左上角，右侧溢出被窗口自身裁掉，
    露出的就是贴图左半身（左边缘到脚），不需要任何取景偏移 */
 body.docked #static-fallback {
-  width: var(--pet, 200px);
-  height: var(--pet, 200px);
+  width: var(--widget, 200px);
+  height: var(--widget, 200px);
   object-fit: contain;
   top: 0;
   left: 0;
@@ -48,16 +48,16 @@ body.docked.peeked #static-fallback {
 }
 
 /* ---------- 状态动画（叠加在帧动画之上） ---------- */
-@keyframes pet-wiggle {
+@keyframes widget-wiggle {
   0%, 100% { transform: rotate(-6deg) translateY(-1px); }
   50% { transform: rotate(6deg) translateY(1px); }
 }
 
-#pet.dragging, #static-fallback.dragging {
-  animation: pet-wiggle 0.32s ease-in-out infinite;
+#widget.dragging, #static-fallback.dragging {
+  animation: widget-wiggle 0.32s ease-in-out infinite;
 }
 
-@keyframes pet-hop {
+@keyframes widget-hop {
   0% { transform: translateY(0); }
   30% { transform: translateY(-16px) scale(1.08, 0.92); }
   60% { transform: translateY(0) scale(0.94, 1.06); }
@@ -65,8 +65,8 @@ body.docked.peeked #static-fallback {
   100% { transform: translateY(0); }
 }
 
-#pet.hop {
-  animation: pet-hop 0.5s ease;
+#widget.hop {
+  animation: widget-hop 0.5s ease;
 }
 
 /* ---------- 提醒气泡 ---------- */

@@ -10,7 +10,7 @@ const dest = path.join(project, 'release', 'win-unpacked', 'resources', 'app.asa
 // 与 electron-builder files 等效的运行时文件清单（排除 node_modules/release/scripts/frames 等）
 const INCLUDE = [
   'main.js', 'preload.js', 'store.js',
-  'pet.js', 'pet.html', 'pet.css',
+  'widget.js', 'widget.html', 'widget.css',
   'memo.js', 'memo.html', 'memo.css',
   'gantt.js', 'gantt.html', 'gantt.css',
   'ask.js', 'ask.html', 'ask.css',
