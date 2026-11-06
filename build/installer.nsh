@@ -1,7 +1,9 @@
 ; 折页 NSIS 安装脚本自定义入口
 ; 由 package.json -> build.nsis.include 引用，electron-builder 会把它 include 进主安装脚本。
 ;
-; 这里留空即为 electron-builder 的默认安装行为（oneClick=false、不许改安装目录、创建桌面快捷方式）。
+; 本文件留空时，安装行为完全由 package.json -> build.nsis 决定，当前配置为：
+;   辅助安装向导（oneClick=false）、允许自选安装目录、按用户安装（免管理员权限）、
+;   安装完成后自动启动、创建桌面快捷方式「折页」。
 ; 需要定制时在下面补宏，常用钩子：
 ;
 ;   !macro customInstall
