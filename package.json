@@ -19,7 +19,8 @@
     "dev": "node scripts/dev.js",
     "icon": "electron scripts/make-icon.js",
     "dist": "node scripts/dist.js",
-    "dist:d": "node scripts/dist.js d"
+    "dist:d": "node scripts/dist.js d",
+    "dist:t": "node scripts/dist.js t"
   },
   "devDependencies": {
     "electron": "^33.2.0",

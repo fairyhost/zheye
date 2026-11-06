@@ -36,10 +36,10 @@
 
 前往 [Releases](../../releases) 页面下载：
 
-| 文件 | 说明 |
-|---|---|
-| `ZheYe-Setup-x.x.x.exe` | NSIS 安装版，支持自选安装目录 |
-| `ZheYe-Portable-x.x.x.exe` | 便携版，免安装单文件 |
+| 文件                       | 说明                          |
+| -------------------------- | ----------------------------- |
+| `ZheYe-Setup-x.x.x.exe`    | NSIS 安装版，支持自选安装目录 |
+| `ZheYe-Portable-x.x.x.exe` | 便携版，免安装单文件          |
 
 ## 开发
 
@@ -56,9 +56,31 @@ npm start          # 或 npm run dev
 ```bash
 npm run dist       # 输出到项目内 release/<version>/
 npm run dist:d     # 输出到 D:/build/折页/<version>/
+npm run dist:t     # 输出到 release/<version>-<时间戳>/，并将待上传文件汇总到 release/latest/
 ```
 
 产物包含 NSIS 安装包、便携版和未打包目录（`win-unpacked/`）。
+
+#### 重复打包失败怎么办
+
+electron-builder 每轮打包开始都会先清空输出目录里的 `win-unpacked`。如果上一轮生成的 `app.asar` 仍被其他进程占用，清空会失败并报：
+
+```
+remove ...\win-unpacked\resources\app.asar: The process cannot access the file
+because it is being used by another process.
+```
+
+`.asar` 本质是 ZIP 归档，以下常驻进程会打开它读取并长期持有句柄（只共享读、不共享删除），导致文件删不掉：
+
+- 代码编辑器、AI 编程助手的代码索引服务
+- 杀毒软件与企业管控软件（如 DLP）的归档扫描
+- OneDrive、坚果云、Dropbox 等同步盘客户端
+
+这不是项目本身的问题——产物目录被上述进程关注就会复现。按省事程度可选：
+
+1. `npm run dist:t` —— 输出到全新时间戳目录，清空步骤无事可做
+2. 把输出目录指到工作区之外：`npx electron-builder --win -c.directories.output=D:\build\zheye`
+3. 重启系统释放句柄后再打包
 
 ## 技术栈
 
