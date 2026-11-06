@@ -1,7 +1,7 @@
 {
   "id": "eous",
   "name": "伊埃斯",
-  "sizes": { "small": 140, "medium": 200, "large": 280 },
+  "sizes": { "tiny": 100, "small": 140, "medium": 200, "large": 280 },
   "dock": {
     "pose": {
       "bottom": { "tilt": 0.2, "ax": 0.5, "ay": 0.5 },

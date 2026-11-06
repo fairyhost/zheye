@@ -42,7 +42,7 @@ const DOCK_DWELL_MS = 500; // 顶住边缘多久才吸附（防止路过/停放�
 
 const tasksStore = new Store('tasks.json', { items: [] });
 const configStore = new Store('config.json', {
-  widgetHeight: 200,
+  widgetHeight: 100,
   widgetPos: null,
   memoSize: { width: 360, height: 520 },
   ganttSize: { width: 1000, height: 640 },
